@@ -1,0 +1,36 @@
+# версия языка
+version: '3.8'
+
+# Обозначаем первый сервис - сервер
+services:
+  server:
+    # и говорим ему собраться так как в докерфайле.
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    # задаем соответствия между деректорией на машине и деректорией в контейнере
+    volumes:
+      - ./backend/:/backend/
+    # Пподключам приложение к единорогу задаем номера пoртов на локальной машие
+    command: uvicorn app.api.server:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    # переменные окружения сохраняюся в .env
+    env_file:
+      - ./backend/.env
+    # порты на локальной машине и в контейнере
+    ports:
+      - 8000:8000
+
+  # обавляем еще один сервер "база данных"
+  bd:
+    # добавляем образ включаюий все что нужо для работы с бд
+    image:  postgres:13-alpine
+    volumes:
+    # разные порты позволяют запускать контейнеры оновременно и не убивать бд каждый раз
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./backend/.env
+    ports:
+     - 5432:5432
+
+volumes:
+    postgres_data:
